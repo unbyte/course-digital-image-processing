@@ -1,0 +1,31 @@
+.filter-panel {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  .actions {
+    width: 100%;
+    & > button:first-child {
+      width: 30%;
+    }
+    & > button:last-child {
+      width: 70%;
+    }
+  }
+
+  .filter-list {
+    margin-top: 20px;
+    .filter {
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .psnr {
+    text-align: center;
+    margin: 8px 0;
+  }
+}
