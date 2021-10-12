@@ -8,6 +8,7 @@ import { resolve } from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
+    base: mode === 'production' ? '/course-digital-image-processing/' : '/',
     resolve: {
       alias: [{ find: '@', replacement: resolve(__dirname, 'src') }],
     },
