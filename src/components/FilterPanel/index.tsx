@@ -7,9 +7,11 @@ import {
   gaussian,
   highPass,
   laplacian,
+  LoG,
   lowPass,
   mean,
   median,
+  roberts,
   sharpen,
   sobel,
 } from '@/core/transformer/filters'
@@ -36,6 +38,8 @@ export const FilterPanel = defineComponent(() => {
       label: 'Enhancement',
       icon: 'pi pi-external-link',
       items: [
+        { label: roberts.displayName, command: () => handlePush(roberts) },
+        { label: LoG.displayName, command: () => handlePush(LoG) },
         { label: sobel.displayName, command: () => handlePush(sobel) },
         { label: highPass.displayName, command: () => handlePush(highPass) },
         { label: lowPass.displayName, command: () => handlePush(lowPass) },
