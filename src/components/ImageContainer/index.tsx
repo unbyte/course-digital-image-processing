@@ -1,6 +1,6 @@
 import { defineComponent, ref, watch } from 'vue'
-import styles from './index.module.less'
 import { image } from '@/store'
+import ScrollPanel from 'primevue/scrollpanel'
 
 export const ImageContainer = defineComponent(() => {
   const canvas = ref<HTMLCanvasElement | null>()
@@ -24,8 +24,8 @@ export const ImageContainer = defineComponent(() => {
   )
 
   return () => (
-    <div class={styles.canvasContainer}>
+    <ScrollPanel style="width: 100%; height: calc(100vh - 40px);">
       <canvas ref={canvas} />
-    </div>
+    </ScrollPanel>
   )
 })

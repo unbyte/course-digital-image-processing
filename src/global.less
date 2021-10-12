@@ -14,11 +14,7 @@ html, body, #app {
 }
 
 .image-container {
-  box-sizing: border-box;
   padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-self: center;
 }
 
 .filter-panel {
@@ -30,6 +26,8 @@ html, body, #app {
     flex-direction: row;
 
     .image-container {
+      width: calc(100vw - 360px);
+      min-width: calc(100vw - 360px);
     }
 
     .filter-panel {
@@ -45,10 +43,15 @@ html, body, #app {
     flex-direction: column;
 
     .image-container {
+      width: 100%;
     }
 
     .filter-panel {
       width: 100%;
     }
   }
+}
+
+::-webkit-scrollbar {
+  display: none;
 }

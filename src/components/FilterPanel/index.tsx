@@ -4,13 +4,16 @@ import Menu from 'primevue/menu'
 import Button from 'primevue/button'
 import { applyTransformer, Transformer } from '@/core/transformer/base'
 import {
+  embossing,
   gaussian,
+  gaussianBlur,
   highPass,
   laplacian,
   LoG,
   lowPass,
   mean,
   median,
+  motionBlur,
   roberts,
   sharpen,
   sobel,
@@ -27,7 +30,6 @@ export const FilterPanel = defineComponent(() => {
   const items = [
     {
       label: 'Smoothing',
-      icon: 'pi pi-external-link',
       items: [
         { label: mean.displayName, command: () => handlePush(mean) },
         { label: gaussian.displayName, command: () => handlePush(gaussian) },
@@ -35,16 +37,32 @@ export const FilterPanel = defineComponent(() => {
       ],
     },
     {
-      label: 'Enhancement',
-      icon: 'pi pi-external-link',
+      label: 'Edge/Line',
       items: [
         { label: roberts.displayName, command: () => handlePush(roberts) },
         { label: LoG.displayName, command: () => handlePush(LoG) },
         { label: sobel.displayName, command: () => handlePush(sobel) },
         { label: highPass.displayName, command: () => handlePush(highPass) },
-        { label: lowPass.displayName, command: () => handlePush(lowPass) },
         { label: laplacian.displayName, command: () => handlePush(laplacian) },
+      ],
+    },
+    {
+      label: 'Enhancement',
+      items: [
         { label: sharpen.displayName, command: () => handlePush(sharpen) },
+        { label: lowPass.displayName, command: () => handlePush(lowPass) },
+        {
+          label: gaussianBlur.displayName,
+          command: () => handlePush(gaussianBlur),
+        },
+        {
+          label: motionBlur.displayName,
+          command: () => handlePush(motionBlur),
+        },
+        {
+          label: embossing.displayName,
+          command: () => handlePush(embossing),
+        },
       ],
     },
   ]

@@ -127,3 +127,41 @@ const LoGKernel = [
 export const LoG = defineTransformer('LoG', (image) =>
   convolution(image, LoGKernel)
 )
+
+const gaussianBlurKernel = matrixNormalize([
+  [1, 4, 7, 4, 1],
+  [4, 16, 26, 16, 4],
+  [7, 26, 41, 26, 7],
+  [4, 16, 26, 16, 4],
+  [1, 4, 7, 4, 1],
+])
+
+export const gaussianBlur = defineTransformer('Gaussian Blur', (image) =>
+  convolution(image, gaussianBlurKernel)
+)
+
+const motionBlurKernel = matrixNormalize([
+  [1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 1, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 1, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 1],
+])
+
+export const motionBlur = defineTransformer('Motion Blur', (image) =>
+  convolution(image, motionBlurKernel)
+)
+
+const embossingKernel = [
+  [-1, -1, 0],
+  [-1, 0, 1],
+  [0, 1, 1],
+]
+
+export const embossing = defineTransformer('Embossing', (image) =>
+  convolution(image, embossingKernel)
+)
