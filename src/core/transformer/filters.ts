@@ -162,6 +162,11 @@ const embossingKernel = [
   [0, 1, 1],
 ]
 
-export const embossing = defineTransformer('Embossing', (image) =>
-  convolution(image, embossingKernel)
-)
+export const embossing = defineTransformer('Embossing', (image) => {
+  const result = convolution(image, embossingKernel)
+  const length = result.data.length
+  for (let i = 0; i < length; i++) {
+    result.data[i] += 128
+  }
+  return result
+})
