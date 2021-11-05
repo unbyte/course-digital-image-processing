@@ -141,7 +141,7 @@ function useFilters() {
         image.value = applyTransformer(image.value!, [transformer])
         psnr.value = PSNR(originalImage.value!, image.value!)
         busy.value = false
-      }, 0)
+      }, 600)
     }
   }
   const handleRemove = (index: number) => {
@@ -153,7 +153,7 @@ function useFilters() {
         image.value = applyTransformer(originalImage.value!, filters)
         psnr.value = PSNR(originalImage.value!, image.value!)
         busy.value = false
-      }, 0)
+      }, 600)
     }
   }
 
