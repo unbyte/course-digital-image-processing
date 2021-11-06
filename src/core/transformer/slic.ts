@@ -91,7 +91,6 @@ export function slic(
   // clustering
   for (let i = 0; i < iteration; i++) clustering()
 
-  console.log(clusterCenters, pixelToCenter)
   return {
     pixelate,
     showContours,
@@ -205,7 +204,7 @@ export function slic(
   }
 
   // nice but don't need it now :(
-  function pixelate(image: ImageData, pixelSize: number) {
+  function pixelate(image: ImageData, pixelSize: number, showGrid = false) {
     const { width, height, data } = image
     const rows = Math.ceil(height / pixelSize)
     const cols = Math.ceil(width / pixelSize)
@@ -251,6 +250,28 @@ export function slic(
         }
       }
     }
+
+    if (showGrid) {
+      for (let i = pixelSize; i < width; i += pixelSize) {
+        for (let j = 0; j < height; j++) {
+          const pos = 4 * (j * width + i)
+          result.data[pos] = 255
+          result.data[pos + 1] = 255
+          result.data[pos + 2] = 255
+          result.data[pos + 3] = 255
+        }
+      }
+      for (let j = pixelSize; j < height; j += pixelSize) {
+        for (let i = 0; i < width; i++) {
+          const pos = 4 * (j * width + i)
+          result.data[pos] = 255
+          result.data[pos + 1] = 255
+          result.data[pos + 2] = 255
+          result.data[pos + 3] = 255
+        }
+      }
+    }
+
     return result
   }
 
