@@ -21,6 +21,7 @@ import {
 import { image, originalImage } from '@/store'
 import { useReadImageData } from '@/hooks/useReadImage'
 import { PSNR } from '@/core/operation/psnr'
+import { slic } from '@/core/transformer/slic'
 
 export const FilterPanel = defineComponent(() => {
   const menu = ref<Menu>()
@@ -62,6 +63,71 @@ export const FilterPanel = defineComponent(() => {
         {
           label: embossing.displayName,
           command: () => handlePush(embossing),
+        },
+      ],
+    },
+    {
+      label: 'Segmentation',
+      items: [
+        {
+          label: 'SLIC Contours',
+          command: () => {
+            const s = ((image: ImageData) => {
+              const t = slic(image, {
+                blockSize: 40,
+                iteration: 20,
+                weight: 10,
+              })
+              return t.showContours(image)
+            }) as any
+            s.displayName = 'SLIC Contours'
+            handlePush(s)
+          },
+        },
+        {
+          label: 'SLIC AP Contours',
+          command: () => {
+            const s = ((image: ImageData) => {
+              const t = slic(image, {
+                blockSize: 40,
+                iteration: 20,
+                weight: 10,
+              })
+              return t.showContoursAfterAP(image)
+            }) as any
+            s.displayName = 'SLIC AP Contours'
+            handlePush(s)
+          },
+        },
+        {
+          label: 'SLIC AP',
+          command: () => {
+            const s = ((image: ImageData) => {
+              const t = slic(image, {
+                blockSize: 40,
+                iteration: 20,
+                weight: 10,
+              })
+              return t.showAP(image)
+            }) as any
+            s.displayName = 'SLIC AP'
+            handlePush(s)
+          },
+        },
+        {
+          label: 'SLIC Pixelation',
+          command: () => {
+            const s = ((image: ImageData) => {
+              const t = slic(image, {
+                blockSize: 15,
+                iteration: 10,
+                weight: 10,
+              })
+              return t.pixelate(image, 15, true)
+            }) as any
+            s.displayName = 'SLIC Pixelation'
+            handlePush(s)
+          },
         },
       ],
     },

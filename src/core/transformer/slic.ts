@@ -94,6 +94,8 @@ export function slic(
   return {
     pixelate,
     showContours,
+    showContoursAfterAP,
+    showAP,
   }
 
   function clustering() {
@@ -133,7 +135,7 @@ export function slic(
       for (let j = 0; j < height; j++) {
         const pos = j * width + i
         const c = pixelToCenter[pos]
-        if (c != -1) {
+        if (c !== -1) {
           const center = clusterCenters[c]
           center.l += lab[4 * pos]
           center.a += lab[4 * pos + 1]
@@ -203,7 +205,6 @@ export function slic(
     return Math.pow(dc / weight, 2) + Math.pow(ds / blockSize, 2)
   }
 
-  // nice but don't need it now :(
   function pixelate(image: ImageData, pixelSize: number, showGrid = false) {
     const { width, height, data } = image
     const rows = Math.ceil(height / pixelSize)
@@ -222,7 +223,7 @@ export function slic(
         for (let i = startX; i < endX && i < width; i++) {
           for (let j = startY; j < endY && j < height; j++) {
             const c = pixelToCenter[j * width + i]
-            if (c != -1)
+            if (c !== -1)
               if (count[c]) count[c]++
               else count[c] = 1
           }
@@ -275,7 +276,6 @@ export function slic(
     return result
   }
 
-  // nice but don't need it now :(
   function showContours(image: ImageData) {
     const { width, height, data } = image
     const result = createImageData(width, height)
@@ -317,6 +317,199 @@ export function slic(
           result.data[pos + 2] = data[pos + 2]
           result.data[pos + 3] = data[pos + 3]
         }
+      }
+    }
+    return result
+  }
+
+  function getSimilarity(weightL = 3, weightA = 10, weightB = 10) {
+    const centersCount = clusterCenters.length
+    const similarity = new Array(centersCount * centersCount)
+
+    let sum = 0
+    for (let i = 0; i < centersCount; i++) {
+      for (let j = 0; j < centersCount; j++) {
+        const index = i * centersCount + j
+        const centerI = clusterCenters[i]
+        const centerJ = clusterCenters[j]
+        similarity[index] = -(
+          weightL * Math.pow(centerI.l - centerJ.l, 2) +
+          weightA * Math.pow(centerI.a - centerJ.a, 2) +
+          weightB * Math.pow(centerI.b - centerJ.b, 2)
+        )
+        sum += similarity[index]
+      }
+    }
+    const mean = sum / (centersCount * centersCount - centersCount)
+    for (let i = 0; i < centersCount; i++)
+      similarity[i * centersCount + i] = mean
+
+    return similarity
+  }
+
+  function ap(similarity: number[], lambda = 0.5, maxIteration = 200) {
+    const centersCount = clusterCenters.length
+
+    const matrixR = new Array<number>(centersCount * centersCount).fill(0)
+    const matrixA = new Array<number>(centersCount * centersCount).fill(0)
+
+    const firstMax = new Array<number>(centersCount).fill(
+      -Number.MAX_SAFE_INTEGER
+    ) // the max number of s(i,k) + a(i,k);
+    const secondMax = new Array<number>(centersCount).fill(
+      -Number.MAX_SAFE_INTEGER
+    ) // the second max number of s(i,k) + a(i,k);
+    const centerOfCenter = new Array<number>(centersCount).fill(-1)
+
+    // init max numbers
+    for (let i = 0; i < centersCount; i++) {
+      for (let j = 0; j < centersCount; j++) {
+        const index = i * centersCount + j
+        if (similarity[index] > firstMax[i]) {
+          secondMax[i] = firstMax[i]
+          firstMax[i] = similarity[index]
+        } else if (similarity[index] > secondMax[i]) {
+          secondMax[i] = similarity[index]
+        }
+      }
+    }
+
+    let stableTime = 0
+    let iterTime = 0
+    let remainWeight = 0 // lambda
+    let updateWeight = 1 // 1 - lambda
+
+    const maxStableTime = maxIteration / 10
+    while (stableTime < maxStableTime && iterTime < maxIteration) {
+      const sumK = new Array(centersCount).fill(0) // the sum of sum_k{max{0, r(i,k)}}
+
+      // update R
+      for (let i = 0; i < centersCount; i++) {
+        for (let j = 0; j < centersCount; j++) {
+          const index = i * centersCount + j
+          const maxAS =
+            firstMax[i] === matrixA[index] + similarity[index]
+              ? secondMax[i]
+              : firstMax[i]
+          const newR = similarity[index] - maxAS
+          matrixR[index] = remainWeight * matrixR[index] + updateWeight * newR
+
+          if (i !== j) {
+            sumK[j] += Math.max(0.0, matrixR[index])
+          }
+        }
+      }
+
+      // reset
+      firstMax.fill(-Number.MAX_SAFE_INTEGER)
+      secondMax.fill(-Number.MAX_SAFE_INTEGER)
+
+      // update A
+      for (let i = 0; i < centersCount; i++) {
+        let curSum = -Number.MAX_SAFE_INTEGER,
+          curTag = -1
+        for (let j = 0; j < centersCount; j++) {
+          const index = i * centersCount + j
+          const r = matrixR[j * centersCount + j]
+          const newA =
+            i === j
+              ? sumK[j]
+              : Math.min(0.0, r + sumK[j] - Math.max(0.0, matrixR[index]))
+
+          matrixA[index] = remainWeight * matrixA[index] + updateWeight * newA
+
+          const asSum = matrixA[index] + similarity[index]
+          if (asSum > firstMax[i]) {
+            secondMax[i] = firstMax[i]
+            firstMax[i] = asSum
+          } else if (asSum > secondMax[i]) {
+            secondMax[i] = asSum
+          }
+
+          const arSum = matrixA[index] + matrixR[index]
+          if (curSum === -Number.MAX_SAFE_INTEGER || curSum < arSum) {
+            curTag = j
+            curSum = arSum
+          }
+        }
+        if (curTag !== centerOfCenter[i]) centerOfCenter[i] = curTag
+      }
+      iterTime++
+      stableTime++
+      remainWeight = lambda
+      updateWeight = 1 - lambda
+    }
+
+    console.log(iterTime, centerOfCenter.includes(-1))
+    return centerOfCenter
+  }
+
+  function showContoursAfterAP(image: ImageData) {
+    const { width, height, data } = image
+    const result = createImageData(width, height)
+    const similarity = getSimilarity(10, 5, 5)
+    const centerOfCenter = ap(similarity, 0.5, 10000)
+
+    const dx8 = [-1, 0, 1, -1, 1, -1, 0, 1]
+    const dy8 = [-1, -1, -1, 0, 0, 1, 1, 1]
+
+    const state = Array.from({ length: width }).map(() =>
+      Array.from({ length: height }).fill(false)
+    )
+
+    for (let i = 0; i < width; i++) {
+      for (let j = 0; j < height; j++) {
+        let count = 0
+        const center = centerOfCenter[pixelToCenter[j * width + i]]
+
+        for (let k = 0; k < 8; k++) {
+          const x = i + dx8[k],
+            y = j + dy8[k]
+
+          if (x >= 0 && x < width && y >= 0 && y < height) {
+            if (
+              state[x][y] === false &&
+              center !== centerOfCenter[pixelToCenter[y * width + x]]
+            )
+              count += 1
+          }
+        }
+
+        const pos = 4 * (j * width + i)
+        if (count >= 2) {
+          result.data[pos] = 255
+          result.data[pos + 1] = 255
+          result.data[pos + 2] = 255
+          result.data[pos + 3] = 255
+        } else {
+          result.data[pos] = data[pos]
+          result.data[pos + 1] = data[pos + 1]
+          result.data[pos + 2] = data[pos + 2]
+          result.data[pos + 3] = data[pos + 3]
+        }
+      }
+    }
+    return result
+  }
+
+  function showAP(image: ImageData) {
+    const { width, height, data } = image
+    const result = createImageData(width, height)
+    const similarity = getSimilarity(10, 5, 5)
+    const centerOfCenter = ap(similarity, 0.5, 2000)
+
+    for (let i = 0; i < width; i++) {
+      for (let j = 0; j < height; j++) {
+        const pos = 4 * (j * width + i)
+        const center =
+          clusterCenters[centerOfCenter[pixelToCenter[j * width + i]]]
+        const centerPos =
+          4 * (Math.floor(center.y) * width + Math.floor(center.x))
+
+        result.data[pos] = data[centerPos]
+        result.data[pos + 1] = data[centerPos + 1]
+        result.data[pos + 2] = data[centerPos + 2]
+        result.data[pos + 3] = data[centerPos + 3]
       }
     }
     return result
